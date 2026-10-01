@@ -1,9 +1,9 @@
 # R3con-Pipelines
 
-# CVE-2026-87902 |
-# Timeline       |
-                 |
-                 |
+# CVE-2026-87902 Timeline
+| 
+|
+|
 [CVE-2026-87902 Timeline.md](https://github.com/user-attachments/files/32928193/CVE-2026-87902.Timeline.md)
 
 1. ## Official Patch Released
