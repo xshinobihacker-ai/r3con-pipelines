@@ -24,6 +24,7 @@ section{margin-bottom:56px}
 section:last-child{margin-bottom:0}
 h1{font-size:1.6rem;margin:0 0 28px}
 h2.section-title{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 20px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+h2{font-size:1.15rem;margin:0 0 16px;color:var(--fg)}
 p{margin:0 0 18px}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--code-bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-x:auto}
 
@@ -65,7 +66,9 @@ ol.steps li::before{content:counter(step);position:absolute;left:0;top:0;width:3
 .fix li{margin-bottom:8px}
 .fix li ul{margin-top:6px}
 .fix strong{color:var(--fg)}
-p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-bg);padding:1px 6px;border-radius:4px}.desc{font-size:1.05rem;margin-bottom:18px}
+
+.desc{font-size:1.05rem;margin-bottom:18px}
+.desc strong{color:var(--fg)}
 </style>
 </head>
 <body>
@@ -132,6 +135,26 @@ p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,
 </tbody>
 </table>
 </div>
+</section>
+
+<section>
+<h2>Vulnerability Details</h2>
+<p class="desc">An unauthenticated attacker can make <code>get_page_template()</code> page-template resolution include a chosen readable local <code>.php</code> file outside the active theme directories. If relevant pre-conditions for both the server and the active theme are met, this can lead to RCE.</p>
+</section>
+
+<section>
+<h2>Source</h2>
+<p>Public query vars <code>pagename</code> and <code>page_id</code>, accepted unauthenticated from GET or POST (<code>WP::parse_request()</code>; POST preferred so the value is not rewritten by canonical redirect). <code>page_id</code> must resolve to a published Page so <code>is_page</code> is true and the 404 template does not shadow the chain. Taint is read later via <code>get_query_var('pagename')</code> in <code>wp-includes/template.php</code>. Early sanitizers (<code>wp_basename()</code>, <code>sanitize_title_for_query()</code> / <code>sanitize_title_with_dashes()</code>) leave valid <code>%xx</code> octets intact — <code>%2f</code> is not treated as a path separator.</p>
+</section>
+
+<section>
+<h2>Payload</h2>
+<p>Double-encoded traversal in <code>pagename</code> (wire form <code>%252e%252e%252f</code> / mixed-case hex). PHP/the SAPI decodes once to <code>%2e%2e%2f</code>; <code>get_page_template()</code>'s extra <code>urldecode()</code> then yields <code>../</code>. The candidate is always <code>page-{decoded}.php</code>, so the first path segment must complete a real top-level theme directory whose name starts with <code>page-</code> (typical: <code>templates</code> → <code>page-templates/</code>). Remaining <code>../</code> segments (depth ~1–12) walk to any readable <code>.php</code>; WordPress appends <code>.php</code>. The custom-template slug from post meta is <code>validate_file()</code>-gated; this <code>pagename</code> candidate is not.</p>
+</section>
+
+<section>
+<h2>Sink</h2>
+<p><code>get_page_template()</code> pushes <code>"page-{$pagename_decoded}.php"</code> into the hierarchy with no <code>validate_file()</code>. <code>get_query_template()</code> → <code>locate_template()</code> concatenates that string onto the active theme directory and accepts the first <code>file_exists()</code> hit — no jail to stylesheet/template roots. <code>template-loader.php</code> then <code>include</code>s the resolved path (CWE-98). RCE is conditional: a reachable argument-taking PHP (e.g. <code>pearcmd.php</code>) plus <code>register_argc_argv=On</code>, so <code>+</code>-prefixed query tokens become <code>$argv</code> in the included file.</p>
 </section>
 
 <section>
