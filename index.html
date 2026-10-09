@@ -64,11 +64,8 @@ code{font-size:.9em;background:rgba(127,127,127,.18);padding:1px 5px;border-radi
 
 
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+
 <title>Technical overview</title>
 <style>
 :root{--bg:#f6f7f9;--fg:#1c2330;--muted:#5d6675;--line:#d5dae3;--head:#e9edf3;
@@ -161,3 +158,92 @@ code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-
 </div>
 
   First, it updates the check in get_page_template() so the decoded name is added only if 0 === validate_file( $pagename_decoded ). Second, it adds _wp_is_template_path_allowed() to locate_template(). For names that contain traversal, this function resolves the full path and compares it with the active theme, the parent theme, and the compatibility directories. A path that points to wp-content/index.php is outside these directories, so the check rejects it.
+
+
+
+
+ 
+<title>Technical breakdown</title>
+<style>
+:root{
+  --bg:#ffffff;--fg:#1d1d22;--muted:#4a4a55;--code-bg:#f2f2f5;--block-bg:#f7f7f9;--border:#d9d9e0;
+  --kw:#c0303f;--var:#2b6a8f;--str:#a3641a;--accent:#111;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0d0d10;--fg:#f2f2f4;--muted:#b4b4bd;--code-bg:#1b1b20;--block-bg:#131316;--border:#2a2a31;--kw:#ff5c6c;--var:#9cc7e0;--str:#f0c27a;--accent:#fff}
+}
+:root[data-theme="dark"]{--bg:#0d0d10;--fg:#f2f2f4;--muted:#b4b4bd;--code-bg:#1b1b20;--block-bg:#131316;--border:#2a2a31;--kw:#ff5c6c;--var:#9cc7e0;--str:#f0c27a;--accent:#fff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--muted);font:18px/1.75 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 20px 64px}
+h1{color:var(--fg);font-size:1.7rem;margin:0 0 20px}
+p{margin:0 0 20px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--code-bg);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;overflow-wrap:anywhere}
+.block{background:var(--block-bg);border:1px solid var(--border);border-radius:14px;margin:0 0 24px;overflow:hidden}
+.block-head{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);font-size:.8rem;color:var(--muted);letter-spacing:.03em}
+.block-head button{font:inherit;color:var(--fg);background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer}
+.block pre{margin:0;padding:18px 16px;overflow-x:auto;font:.85rem/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--fg)}
+.kw{color:var(--kw)}.v{color:var(--var)}.s{color:var(--str)}
+ol{padding-left:1.4em;margin:0 0 24px}
+li{margin-bottom:18px;padding-left:6px}
+li::marker{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Technical breakdown</h1>
+
+<p>The first weak point is in <code>get_page_template()</code>. The following excerpt from vulnerable <code>wp-includes/template.php</code> shows the branch that prioritizes a decoded page name:</p>
+
+<div class="block">
+  <div class="block-head"><span>PHP</span><button type="button" data-copy>COPY</button></div>
+<pre><span class="v">$pagename_decoded</span> = urldecode( <span class="v">$pagename</span> );
+<span class="kw">if</span> ( <span class="v">$pagename_decoded</span> !== <span class="v">$pagename</span> ) {
+    <span class="v">$templates</span>[] = <span class="s">"page-{$pagename_decoded}.php"</span>;
+}</pre>
+</div>
+
+<p>There is no traversal check on <code>$pagename_decoded</code>. The generated name goes to <code>get_query_template()</code>, which calls <code>locate_template()</code>. In the vulnerable locator, an existing file is enough to select a candidate:</p>
+
+<div class="block">
+  <div class="block-head"><span>PHP</span><button type="button" data-copy>COPY</button></div>
+<pre><span class="kw">if</span> ( file_exists( <span class="v">$wp_stylesheet_path</span> . <span class="s">'/'</span> . <span class="v">$template_name</span> ) ) {
+    <span class="v">$located</span> = <span class="v">$wp_stylesheet_path</span> . <span class="s">'/'</span> . <span class="v">$template_name</span>;
+    <span class="kw">break</span>;
+}</pre>
+</div>
+
+<p>The concatenation does not enforce a directory boundary. If <code>$template_name</code> contains <code>../</code>, <code>file_exists()</code> can succeed for a PHP file outside <code>$wp_stylesheet_path</code>; the selected path is then included by the template loader. The excerpts are from WordPress's <code>get_page_template()</code> and <code>locate_template()</code> source; the upstream fix changes both paths.</p>
+
+<p>For example, our lab sends a page request whose pagename contains double-encoded slashes and dots:</p>
+
+<div class="block">
+  <div class="block-head"><span>HTTP</span><button type="button" data-copy>COPY</button></div>
+<pre><span class="kw">GET</span> <span class="s">/?page_id=2&amp;pagename=templates%252F%252E%252E%252F%252E%252E%252F%252E%252E%252F…</span></pre>
+</div>
+
+<p>The decoding and file selection happen in stages:</p>
+
+<ol>
+  <li>PHP decodes the query string once. WordPress receives <code>templates%2F%2E%2E%2F%2E%2E%2F%2E%2E%2Findex</code> as the pagename value. The encoded dots survive WordPress's page-name sanitization; literal <code>..</code> did not survive in our lab.</li>
+  <li><code>page_id=2</code> selects a real published page, so the request reaches the page-template hierarchy. A pagename request on its own returned 404 in our setup.</li>
+  <li><code>get_page_template()</code> runs <code>urldecode()</code> and constructs <code>page-templates/../../../index.php</code> from the decoded value.</li>
+  <li>With a page-templates directory in the active theme, <code>locate_template()</code> finds that path. In our lab, <code>/wp-content/themes/cve-lab/page-templates/../../../index.php</code> resolves to <code>/wp-content/index.php</code>.</li>
+  <li>The template loader includes the resolved PHP file. The stock <code>wp-content/index.php</code> contains only a comment, so it produces an empty response body.</li>
+</ol>
+
+<p>The fix changes the first check to require <code>0 === validate_file( $pagename_decoded )</code> before adding the decoded candidate. It also adds <code>_wp_is_template_path_allowed()</code> to <code>locate_template()</code>. For candidates with traversal, that function compares their resolved paths with the active theme, parent theme, and compatibility directories. A path into <code>wp-content/index.php</code> fails that check.</p>
+</main>
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.closest('.block').querySelector('pre').innerText;
+    try{navigator.clipboard.writeText(t);b.textContent='COPIED';setTimeout(function(){b.textContent='COPY'},1200)}catch(e){}
+  });
+});
+</script>
+</body>
+</html>
+
+ 
