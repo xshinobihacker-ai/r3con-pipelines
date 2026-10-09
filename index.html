@@ -60,8 +60,7 @@ code{font-size:.9em;background:rgba(127,127,127,.18);padding:1px 5px;border-radi
 </body>
 </html>
 
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -121,8 +120,8 @@ tbody th{width:30%;color:var(--muted);font-weight:500;font-family:ui-monospace,M
 </main>
 </body>
 
-  <head>
-<title>Vulnerability Details — CVE-2026-87902</title>
+ 
+<h2>Vulnerability Details — CVE-2026-87902</h2>
 <style>
 :root{--bg:#f6f7f9;--fg:#1c2330;--muted:#5d6675;--line:#d5dae3;--head:#e9edf3;--accent:#2f6fdb;--code-bg:rgba(127,127,127,.14);
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -143,8 +142,8 @@ code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-
 </head>
 <body>
 <main>
-<h2 class="section-title">Vulnerability Details</h2>
-<p class="desc">An unauthenticated attacker can make <code>get_page_template()</code> page-template resolution include a chosen readable local <code>.php</code> file outside the active theme directories. If relevant pre-conditions for both the server and the active theme are met, this can lead to RCE.</p>
+
+  <p class="desc">An unauthenticated attacker can make <code>get_page_template()</code> page-template resolution include a chosen readable local <code>.php</code> file outside the active theme directories. If relevant pre-conditions for both the server and the active theme are met, this can lead to RCE.</p>
 
 <div class="card">
 <h3>Source</h3>
@@ -161,4 +160,4 @@ code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-
 <p><code>get_page_template()</code> pushes <code>"page-{$pagename_decoded}.php"</code> into the hierarchy with no <code>validate_file()</code>. <code>get_query_template()</code> → <code>locate_template()</code> concatenates that string onto the active theme directory and accepts the first <code>file_exists()</code> hit — no jail to stylesheet/template roots. <code>template-loader.php</code> then <code>include</code>s the resolved path (CWE-98). RCE is conditional: a reachable argument-taking PHP (e.g. <code>pearcmd.php</code>) plus <code>register_argc_argv=On</code>, so <code>+</code>-prefixed query tokens become <code>$argv</code> in the included file.</p>
 </div>
 
-  irst, it updates the check in get_page_template() so the decoded name is added only if 0 === validate_file( $pagename_decoded ). Second, it adds _wp_is_template_path_allowed() to locate_template(). For names that contain traversal, this function resolves the full path and compares it with the active theme, the parent theme, and the compatibility directories. A path that points to wp-content/index.php is outside these directories, so the check rejects it.
+  First, it updates the check in get_page_template() so the decoded name is added only if 0 === validate_file( $pagename_decoded ). Second, it adds _wp_is_template_path_allowed() to locate_template(). For names that contain traversal, this function resolves the full path and compares it with the active theme, the parent theme, and the compatibility directories. A path that points to wp-content/index.php is outside these directories, so the check rejects it.
