@@ -1,1 +1,31 @@
-
+ol.steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 0 0 24px;
+  padding: 0;
+}
+ol.steps li {
+  position: relative;
+  counter-increment: step;
+  padding-left: 48px;
+  margin-bottom: 24px;
+}
+ol.steps li:last-child {
+  margin-bottom: 0;
+}
+ol.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 3px solid var(--dot, #2f6fdb);
+  color: var(--dot, #2f6fdb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 .85rem system-ui, sans-serif;
+}
