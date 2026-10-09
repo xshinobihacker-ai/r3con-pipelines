@@ -30,31 +30,12 @@ code{font-size:.9em;background:rgba(127,127,127,.18);padding:1px 5px;border-radi
 <body>
 <main>
 <h1>CVE-2026-87902 Timeline</h1>
-<ol>
-<li>
-<h2>Official Patch Released</h2>
-<time>September 22, 2026</time>
-<p>WordPress released version 7.1.2 to address CVE-2026-87902, a critical (CVSS 9.2) unauthenticated path traversal and local PHP file inclusion vulnerability in WordPress Core's <code>get_page_template()</code> function. Security fixes were also backported to all older maintained branches down to version 4.7.</p>
-<div class="src">Source: <a href="https://asec.ahnlab.com/en/95580/">WordPress Security Update Advisory</a></div>
-</li>
-<li>
-<h2>First Probing Attempts</h2>
-<time>September 22, 2026 (11:49 UTC)</time>
-<p>Less than five hours after the official patch became public, early internet probing and exploitation attempts were recorded. The rapid targeting highlighted how quickly threat actors can automate attacks on large attack surfaces like the WordPress ecosystem.</p>
-<div class="src">Source: <a href="https://thenextweb.com/news/wordpress-flaw-cve-2026-87902-exploited">Patchstack via The Next Web</a></div>
-</li>
-<li>
-<h2>Official PoC Exploit Published</h2>
-<time>September 23, 2026</time>
-<p>Security researcher <strong>Robert Ressl</strong>, who originally discovered and responsibly disclosed the vulnerability to WordPress, published the official Proof-of-Concept (PoC) exploit along with a reproducible lab environment. The PoC demonstrated how manipulating the page slug allows the template loader to reach readable PHP files outside the active theme, resulting in conditional Remote Code Execution (RCE).</p>
-<div class="src">Source: <a href="https://github.com/SecureWithUmer/CVE-2026-PoCs">GitHub Security / Researcher PoC Repository</a></div>
-</li>
-<li class="hot">
-<h2>Mass Weaponization</h2>
-<time>September 24, 2026</time>
-<p>Threat actors actively weaponized the vulnerability to bypass security boundaries, utilizing techniques like exploiting <code>pearcmd.php</code> to drop web shells into temporary directories. Multiple security vendors observed in-the-wild exploitation resulting in complete server compromise and potential data exfiltration.</p>
-<div class="src">Source: Aviatrix Threat Research Center</div>
-</li>
+<ol class="steps">
+  <li>PHP decodes the query string once. WordPress receives <code>templates%2F%2E%2E%2F%2E%2E%2F%2E%2E%2Findex</code> as the pagename value. The encoded dots survive WordPress's page-name sanitization; literal <code>..</code> did not survive in our lab.</li>
+  <li><code>page_id=2</code> selects a real published page, so the request reaches the page-template hierarchy. A pagename request on its own returned 404 in our setup.</li>
+  <li><code>get_page_template()</code> runs <code>urldecode()</code> and constructs <code>page-templates/../../../index.php</code> from the decoded value.</li>
+  <li>With a page-templates directory in the active theme, <code>locate_template()</code> finds that path. In our lab, <code>/wp-content/themes/cve-lab/page-templates/../../../index.php</code> resolves to <code>/wp-content/index.php</code>.</li>
+  <li>The template loader includes the resolved PHP file. The stock <code>wp-content/index.php</code> contains only a comment, so it produces an empty response body.</li>
 </ol>
 </main>
 </body>
