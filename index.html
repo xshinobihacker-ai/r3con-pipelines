@@ -25,7 +25,7 @@ section:last-child{margin-bottom:0}
 h1{font-size:1.6rem;margin:0 0 28px}
 h2.section-title{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 20px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 p{margin:0 0 18px}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--code-bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--code-bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-x:auto}
 
 /* timeline */
 ol.timeline{list-style:none;margin:0;padding:0;position:relative}
@@ -58,13 +58,14 @@ tbody th{width:30%;color:var(--muted);font-weight:500;font-family:ui-monospace,M
 ol.steps{list-style:none;counter-reset:step;margin:0 0 24px;padding:0}
 ol.steps li{list-style:none;position:relative;counter-increment:step;padding-left:48px;margin-bottom:24px}
 ol.steps li:last-child{margin-bottom:0}
-ol.steps li::before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:3px solid var(--dot);color:var(--dot);display:flex;align-items:center;justify-content:center;font:600 .85rem system-ui,sans-serif;background:var(--bg)}
+ol.steps li::before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:3px solid var(--dot);color:var(--dot);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;background:var(--bg)}
 .fix{border:1px solid var(--line);background:var(--head);border-radius:10px;padding:16px 20px;margin:0 0 16px}
 .fix h3{color:var(--fg);font-size:1rem;margin:0 0 10px}
 .fix ul{margin:0;padding-left:1.2em}
 .fix li{margin-bottom:8px}
 .fix li ul{margin-top:6px}
 .fix strong{color:var(--fg)}
+p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-bg);padding:1px 6px;border-radius:4px}.desc{font-size:1.05rem;margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -78,25 +79,25 @@ ol.steps li::before{content:counter(step);position:absolute;left:0;top:0;width:3
 <li>
 <h3>Official Patch Released</h3>
 <time>September 22, 2026</time>
-<p>WordPress released version 7.1.2 to address CVE-2026-87902, a critical (CVSS 9.2) unauthenticated path traversal and local PHP file inclusion vulnerability in WordPress Core's <code>get_page_template()</code> function. Security fixes were also backported to all older maintained branches down to version 4.7.</p>
+<p>WordPress released version 7.1.2 to address CVE-2026-87902, a critical (CVSS 9.2) unauthenticated path traversal and local PHP file inclusion vulnerability in WordPress Core's <code>get_page_template()</code> and <code>locate_template()</code>.</p>
 <div class="src">Source: <a href="https://asec.ahnlab.com/en/95580/">WordPress Security Update Advisory</a></div>
 </li>
 <li>
 <h3>First Probing Attempts</h3>
 <time>September 22, 2026 (11:49 UTC)</time>
-<p>Less than five hours after the official patch became public, early internet probing and exploitation attempts were recorded. The rapid targeting highlighted how quickly threat actors can automate attacks on large attack surfaces like the WordPress ecosystem.</p>
+<p>Less than five hours after the official patch became public, early internet probing and exploitation attempts were recorded. The rapid targeting highlighted how quickly threat actors can automate abuse of newly disclosed path traversal issues.</p>
 <div class="src">Source: <a href="https://thenextweb.com/news/wordpress-flaw-cve-2026-87902-exploited">Patchstack via The Next Web</a></div>
 </li>
 <li>
 <h3>Official PoC Exploit Published</h3>
 <time>September 23, 2026</time>
-<p>Security researcher <strong>Robert Ressl</strong>, who originally discovered and responsibly disclosed the vulnerability to WordPress, published the official Proof-of-Concept (PoC) exploit along with a reproducible lab environment. The PoC demonstrated how manipulating the page slug allows the template loader to reach readable PHP files outside the active theme, resulting in conditional Remote Code Execution (RCE).</p>
+<p>Security researcher <strong>Robert Ressl</strong>, who originally discovered and responsibly disclosed the vulnerability to WordPress, published the official Proof-of-Concept (PoC) exploit along with a public technical walkthrough.</p>
 <div class="src">Source: <a href="https://github.com/SecureWithUmer/CVE-2026-PoCs">GitHub Security / Researcher PoC Repository</a></div>
 </li>
 <li class="hot">
 <h3>Mass Weaponization</h3>
 <time>September 24, 2026</time>
-<p>Threat actors actively weaponized the vulnerability to bypass security boundaries, utilizing techniques like exploiting <code>pearcmd.php</code> to drop web shells into temporary directories. Multiple security vendors observed in-the-wild exploitation resulting in complete server compromise and potential data exfiltration.</p>
+<p>Threat actors actively weaponized the vulnerability to bypass security boundaries, utilizing techniques like exploiting <code>pearcmd.php</code> to drop web shells into temporary directories. Multi-vector exploitation became common within hours of disclosure.</p>
 <div class="src">Source: Aviatrix Threat Research Center</div>
 </li>
 </ol>
@@ -127,14 +128,12 @@ ol.steps li::before{content:counter(step);position:absolute;left:0;top:0;width:3
 </td></tr>
 <tr><th scope="row">Fixed in</th><td>7.1.2, with fixed patch releases for branches back to 4.7</td></tr>
 <tr><th scope="row">Authentication</th><td>None</td></tr>
-<tr><th scope="row">Preconditions</th><td>Exploitability depends on the active theme and server environment; our demonstration uses a published page and a page-templates directory in a classic theme</td></tr>
+<tr><th scope="row">Preconditions</th><td>Exploitability depends on the active theme and server environment; our demonstration uses a published page and a page-templates directory in a classic theme.</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
-
-p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-bg);padding:1px 6px;border-radius:4px}.desc{font-size:1.05rem;margin-bottom:28px}.desc strong{color:var(--fg)}</style></head><body><main><h1>Vulnerability Details — CVE-2026-87902</h1> <p class="desc">An unauthenticated attacker can make <code>get_page_template()</code> page-template resolution include a chosen readable local <code>.php</code> file outside the active theme directories. If relevant pre-conditions for both the server and the active theme are met, this can lead to RCE.</p> <section><h2>Source</h2><p>Public query vars <code>pagename</code> and <code>page_id</code>, accepted unauthenticated from GET or POST (<code>WP::parse_request()</code>; POST preferred so the value is not rewritten by canonical redirect). <code>page_id</code> must resolve to a published Page so <code>is_page</code> is true and the 404 template does not shadow the chain. Taint is read later via <code>get_query_var('pagename')</code> in <code>wp-includes/template.php</code>. Early sanitizers (<code>wp_basename()</code>, <code>sanitize_title_for_query()</code> / <code>sanitize_title_with_dashes()</code>) leave valid <code>%xx</code> octets intact — <code>%2f</code> is not treated as a path separator.</p></section> <section><h2>Payload</h2><p>Double-encoded traversal in <code>pagename</code> (wire form <code>%252e%252e%252f</code> / mixed-case hex). PHP/the SAPI decodes once to <code>%2e%2e%2f</code>; <code>get_page_template()</code>'s extra <code>urldecode()</code> then yields <code>../</code>. The candidate is always <code>page-{decoded}.php</code>, so the first path segment must complete a real top-level theme directory whose name starts with <code>page-</code> (typical: <code>templates</code> → <code>page-templates/</code>). Remaining <code>../</code> segments (depth ~1–12) walk to any readable <code>.php</code>; WordPress appends <code>.php</code>. The custom-template slug from post meta is <code>validate_file()</code>-gated; this <code>pagename</code> candidate is not.</p></section> <section><h2>Sink</h2><p><code>get_page_template()</code> pushes <code>"page-{$pagename_decoded}.php"</code> into the hierarchy with no <code>validate_file()</code>. <code>get_query_template()</code> → <code>locate_template()</code> concatenates that string onto the active theme directory and accepts the first <code>file_exists()</code> hit — no jail to stylesheet/template roots. <code>template-loader.php</code> then <code>include</code>s the resolved path (CWE-98). RCE is conditional: a reachable argument-taking PHP (e.g. <code>pearcmd.php</code>) plus <code>register_argc_argv=On</code>, so <code>+</code>-prefixed query tokens become <code>$argv</code> in the included file.</p></section> </main></body>
 <section>
 <h2 class="section-title">Technical breakdown</h2>
 
@@ -148,7 +147,7 @@ p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,
 }</pre>
 </div>
 
-<p>The code does not check <code>$pagename_decoded</code> for path traversal. The new name goes to <code>get_query_template()</code>, which calls <code>locate_template()</code>. In the vulnerable version, a file only needs to exist for it to be chosen:</p>
+<p>The code does not check <code>$pagename_decoded</code> for path traversal. The new name goes to <code>get_query_template()</code>, which calls <code>locate_template()</code>. In the vulnerable version, the traversal is not blocked before the file existence check.</p>
 
 <div class="block">
   <div class="block-head"><span>PHP</span><button type="button" data-copy>COPY</button></div>
@@ -158,7 +157,7 @@ p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,
 }</pre>
 </div>
 
-<p>The string join does not limit the path to one directory. If <code>$template_name</code> contains <code>../</code>, <code>file_exists()</code> can return true for a PHP file outside <code>$wp_stylesheet_path</code>. The template loader then includes that file. Both code excerpts come from the WordPress source of <code>get_page_template()</code> and <code>locate_template()</code>, and the official fix patches both functions.</p>
+<p>The string join does not limit the path to one directory. If <code>$template_name</code> contains <code>../</code>, <code>file_exists()</code> can return true for a PHP file outside <code>$wp_stylesheet_path</code>.</p>
 
 <p>A page request can send a pagename that has double-encoded slashes and dots:</p>
 
@@ -170,10 +169,10 @@ p{margin:0 0 10px}p:last-child{margin-bottom:0}code{font:.88em/1.4 ui-monospace,
 <p>The decoding and file selection happen in stages:</p>
 
 <ol class="steps">
-  <li>PHP decodes the query string once. WordPress receives <code>templates%2F%2E%2E%2F%2E%2E%2F%2E%2E%2Findex</code> as the pagename value. The encoded dots survive WordPress's page-name sanitization. Plain <code>..</code> does not pass.</li>
+  <li>PHP decodes the query string once. WordPress receives <code>templates%2F%2E%2E%2F%2E%2E%2F%2E%2E%2Findex</code> as the pagename value. The encoded dots survive WordPress's page-name sanitization and are treated as data.</li>
   <li><code>page_id=2</code> selects a real published page, so the request reaches the page-template hierarchy. A pagename request alone returns 404.</li>
   <li><code>get_page_template()</code> runs <code>urldecode()</code> and constructs <code>page-templates/../../../index.php</code> from the decoded value.</li>
-  <li>With a page-templates directory in the active theme, <code>locate_template()</code> finds that path. For example, <code>/wp-content/themes/example-theme/page-templates/../../../index.php</code> resolves to <code>/wp-content/index.php</code>.</li>
+  <li>With a page-templates directory in the active theme, <code>locate_template()</code> finds that path. For example, <code>/wp-content/themes/example-theme/page-templates/../../../index.php</code> resolves outside the theme and enters the site root.</li>
   <li>The template loader includes the resolved PHP file. The stock <code>wp-content/index.php</code> contains only a comment, so it produces an empty response body.</li>
 </ol>
 
