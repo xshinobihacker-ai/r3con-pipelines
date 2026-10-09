@@ -137,8 +137,6 @@ code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-
   First, it updates the check in get_page_template() so the decoded name is added only if 0 === validate_file( $pagename_decoded ). Second, it adds _wp_is_template_path_allowed() to locate_template(). For names that contain traversal, this function resolves the full path and compares it with the active theme, the parent theme, and the compatibility directories. A path that points to wp-content/index.php is outside these directories, so the check rejects it.
 
 
-
-
  
 <title>Technical breakdown</title>
 <style>
