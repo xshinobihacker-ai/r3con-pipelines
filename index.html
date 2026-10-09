@@ -120,11 +120,7 @@ tbody th{width:30%;color:var(--muted);font-weight:500;font-family:ui-monospace,M
 </div>
 </main>
 </body>
-</html>
 
-
-
-<html>
   <head>
 <title>Vulnerability Details — CVE-2026-87902</title>
 <style>
@@ -164,3 +160,5 @@ code{font:.88em/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--code-
 <h3>Sink</h3>
 <p><code>get_page_template()</code> pushes <code>"page-{$pagename_decoded}.php"</code> into the hierarchy with no <code>validate_file()</code>. <code>get_query_template()</code> → <code>locate_template()</code> concatenates that string onto the active theme directory and accepts the first <code>file_exists()</code> hit — no jail to stylesheet/template roots. <code>template-loader.php</code> then <code>include</code>s the resolved path (CWE-98). RCE is conditional: a reachable argument-taking PHP (e.g. <code>pearcmd.php</code>) plus <code>register_argc_argv=On</code>, so <code>+</code>-prefixed query tokens become <code>$argv</code> in the included file.</p>
 </div>
+
+  irst, it updates the check in get_page_template() so the decoded name is added only if 0 === validate_file( $pagename_decoded ). Second, it adds _wp_is_template_path_allowed() to locate_template(). For names that contain traversal, this function resolves the full path and compares it with the active theme, the parent theme, and the compatibility directories. A path that points to wp-content/index.php is outside these directories, so the check rejects it.
